@@ -2,6 +2,8 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from conf import TOKEN
 import logging
+import sys
+
 
 from app.handlers import router
 from database.init_db import init_db

@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
 from aiogram.fsm.state import StatesGroup, State
+import datetime
 from decimal import Decimal
 
 from database.funcs import pars_date, parse_hours
@@ -106,9 +107,9 @@ async def del_record(message: Message, state: FSMContext):
         result = await delete_date(message.text, message.from_user.id)
 
         if result.rowcount == 0:
-            await message.answer(f"по запросу {wd}, ничего не найдено", reply_markup=kb.for_delete)
+            await message.answer(f"по запросу {wd.strftime('%d.%m.%Y')}, ничего не найдено", reply_markup=kb.for_delete)
         else:
-            await message.answer(f"дата {wd} успешно удалено", reply_markup=kb.for_delete)
+            await message.answer(f"дата {wd.strftime('%d.%m.%Y')} успешно удалено", reply_markup=kb.for_delete)
 
         await state.clear()
     except Exception as e:
