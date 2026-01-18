@@ -20,3 +20,10 @@ for_delete = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="назад в меню", callback_data="to_menu")]
     ]
 )
+
+status = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="по 15 дням")],
+                                       [KeyboardButton(text="от _ до _")],
+                                       [KeyboardButton(text="за все время")]],
+                             resize_keyboard=True,
+                             input_field_placeholder="Выберите операцию..."
+                             )

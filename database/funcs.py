@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from conf import async_session
 from database.models import WorkTime, User
 from sqlalchemy import select
+from calendar import monthrange
 
 def parse_hours(text: str) -> Decimal:
     t = text.strip().replace(",", ".")
@@ -16,7 +17,7 @@ def parse_hours(text: str) -> Decimal:
 
     return value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
 
-def pars_date(wd: str):
+def parse_date(wd: str):
     wd = wd.split(".")
     month = dt.date.today().month
     year = dt.date.today().year
@@ -33,6 +34,37 @@ def pars_date(wd: str):
 
     return dt.datetime.strptime(new_wd, "%Y.%m.%d").date()
 
+def prev_month(date: dt.date):
+    if date.month == 1:
+        return date.replace(year=date.year - 1, month=12)
+    return date.replace(month= date.month - 1)
+
+def dates_for_status():
+    today = dt.date.today()
+    dates =[]
+    while(len(dates) <= 3):
+        first_half = []
+        second_half = []
+
+        lst_dy_m = today.replace(day=monthrange(today.year, today.month)[1])
+        day16 = today.replace(day=16)
+        second_half.append(day16.strftime("%d.%m.%Y"))
+        second_half.append(lst_dy_m.strftime("%d.%m.%Y"))
+        dates.append(second_half)
+
+        fst_dy_m = today.replace(day=1)
+        day15 = today.replace(day=15)
+        first_half.append(fst_dy_m.strftime("%d.%m.%Y"))
+        first_half.append(day15.strftime("%d.%m.%Y"))
+        dates.append(first_half)
+        today = prev_month(today)
+
+    if dt.date.today().day <= 15 and dates:
+        del dates[0]
+    elif dt.date.today().day > 15 and dates:
+        del dates[-1]
+
+    return dates
 
 
 def from_date_to_str(wd: dt.datetime) -> str:
@@ -43,7 +75,7 @@ def from_date_to_str(wd: dt.datetime) -> str:
 
 async def get_date(wd: str, tg_id: int) -> dt.date | None :
     async with async_session() as session:
-        wd = pars_date(wd)
+        wd = parse_date(wd)
         stmt = (select(WorkTime)
                 .where(WorkTime.date == wd, WorkTime.user_id == tg_id)
                 )
@@ -55,9 +87,6 @@ async def get_date(wd: str, tg_id: int) -> dt.date | None :
         else:
             print("найдено:", result.date)
             return result.date
-
-# async def get_time_period(tg_id: int, date_from: dt.date, date_to: dt.date):
-#     async with async_session() as session:
 
 
 # async def get_total_hours(tg_id: int) -> Decimal:

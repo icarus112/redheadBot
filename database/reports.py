@@ -8,7 +8,7 @@ from decimal import Decimal
 import asyncio
 from conf import async_session
 from database.models import User, WorkTime
-from database.funcs import parse_hours, pars_date, get_date
+from database.funcs import parse_hours, parse_date, get_date, dates_for_status
 
 async def get_or_create_user(name:str, tg_id: int) -> str:
     async with (async_session() as session):
@@ -80,7 +80,7 @@ async def get_user_with_times(tg_id: int) -> User | None:
 
 async def delete_date(wd: str, tg_id: int):
     async with async_session() as session:
-        wd = pars_date(wd)
+        wd = parse_date(wd)
         stmt = delete(WorkTime).where(
             WorkTime.user_id == tg_id,
                         WorkTime.date == wd)
@@ -94,5 +94,39 @@ async def delete_date(wd: str, tg_id: int):
         else:
             print(f"дата {wd} успешно удалено")
 
+async def get_time_period(tg_id: int, date_from: str, date_to: str):
+    async with async_session() as session:
 
-# asyncio.run(delete_date('3', 6480514308))
+        stmt = (
+            select(WorkTime).where(
+            WorkTime.user_id == tg_id,
+            WorkTime.date.between(parse_date(date_from), parse_date(date_to))
+        )
+        .order_by(WorkTime.date)
+        )
+
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+async def show_status(tg_id: int) -> str:
+    dates = dates_for_status()
+    text = 'Статус по периодам\n\n'
+    for d in dates:
+        res = await get_time_period(tg_id = tg_id, date_from=d[0], date_to=d[1])
+        text +=f"\u21a6на период {d[0]} \u2194 {d[1]}\n"
+        if len(res) == 0:
+            text +="записей нету\n\n"
+        else:
+            k = 0
+            for r in res:
+                text +=f"\u2022🗓Дата:  {r.date} ⌛️часы {r.hour}\n"
+                k += r.hour
+
+            text +=f"\u25b6Общее количество часов:{k}\n\n"
+    return text
+
+async def test():
+    res = await get_time_period(6480514308, date_from='01', date_to='15')
+    for r in res:
+        print("RESULT: ", r.date, "hours", r.hour)
+# asyncio.run(test())

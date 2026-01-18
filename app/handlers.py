@@ -1,3 +1,4 @@
+import asyncio
 from readline import insert_text
 from sqlalchemy import delete
 from aiogram import F, Router
@@ -8,10 +9,10 @@ from aiogram.fsm.state import StatesGroup, State
 import datetime
 from decimal import Decimal
 
-from database.funcs import pars_date, parse_hours
+from database.funcs import (parse_date, parse_hours, dates_for_status)
 from database.models import async_session, User, WorkTime
 from database.reports import (get_or_create_user, get_user_with_times, insert_time1,
-                              delete_date)
+                              delete_date, get_time_period, show_status)
 import app.keyboards as kb
 
 router = Router()
@@ -36,8 +37,9 @@ async def status(message: Message):
     if not user:
         print("Пользователь не найден")
         return
+    # 6480514308
+    await message.answer( await show_status(message.from_user.id))
 
-    await message.answer(user.get_status())
 
 @router.message(F.text == "Добавить запись")
 async def add_record(message: Message, state: FSMContext):
@@ -47,7 +49,7 @@ async def add_record(message: Message, state: FSMContext):
 @router.message(AddWorkTime.date)
 async def on_date(message: Message, state: FSMContext):
     try:
-        date_obj = pars_date(message.text)
+        date_obj = parse_date(message.text)
     except Exception:
         await message.answer("ты ввел не правильно введи как 12 или 12.01 или 12.02.2026")
         return
@@ -103,7 +105,7 @@ async def back_to_menu(call: CallbackQuery):
 @router.message(DeleteFlow.waiting_date)
 async def del_record(message: Message, state: FSMContext):
     try:
-        wd = pars_date(message.text)
+        wd = parse_date(message.text)
         result = await delete_date(message.text, message.from_user.id)
 
         if result.rowcount == 0:
