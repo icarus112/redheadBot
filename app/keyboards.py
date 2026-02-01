@@ -12,7 +12,7 @@ main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Показать ст
                                      [KeyboardButton(text="Удалить"),
                                       KeyboardButton(text="Редактировать")]],
                            resize_keyboard=True,
-                           input_field_placeholder="Выберите пунскт меню...")
+                           input_field_placeholder="Выберите пункт меню...")
 
 for_delete = InlineKeyboardMarkup(
     inline_keyboard=[

@@ -6,8 +6,6 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship,
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker
 from typing import List
 
-from conf import engine
-
 async_session = async_sessionmaker()
 class Base(DeclarativeBase, AsyncAttrs):
     pass

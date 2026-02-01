@@ -1,6 +1,6 @@
 import datetime as dt
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from conf import async_session
+from database.db import async_session
 from database.models import WorkTime, User
 from sqlalchemy import select
 from calendar import monthrange
@@ -12,8 +12,8 @@ def parse_hours(text: str) -> Decimal:
     except InvalidOperation:
         raise ValueError("нужно число например 1.5")
 
-    if value <= 0:
-        raise ValueError("Число должны быть положительными и больше 0")
+    if value < 0:
+        raise ValueError("Число должны быть положительными или 0")
 
     return value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
 

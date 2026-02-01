@@ -13,8 +13,8 @@ async def main():
     dp=Dispatcher()
     logging.basicConfig(level=logging.INFO)
     dp.include_router(router)
-    await dp.start_polling(bot)
     await init_db()
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     try:

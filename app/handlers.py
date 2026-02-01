@@ -12,9 +12,9 @@ from decimal import Decimal
 from sqlalchemy.orm import defer
 
 from database.funcs import (parse_date, parse_hours, dates_for_status)
-from database.models import async_session, User, WorkTime
-from database.reports import (get_or_create_user, get_user_with_times, insert_time1,
-                              delete_date, get_time_period, show_status, set_rate, set_tips)
+from database.repo.work_time import ( insert_time1, delete_date, get_time_period)
+from database.repo.users import (get_or_create_user, get_user_with_times, set_rate, set_tips, delete_user)
+from database.reports import show_status
 import app.keyboards as kb
 
 router = Router()
@@ -25,6 +25,7 @@ class Logging(StatesGroup):
 class AddWorkTime(StatesGroup):
     date = State()
     hour = State()
+    tips = State()
 
 class DeleteFlow(StatesGroup):
     waiting_date = State()
@@ -81,7 +82,7 @@ async def status(message: Message):
         print("Пользователь не найден")
         return
     # 6480514308
-    await message.answer( await show_status(message.from_user.id))
+    await message.answer( await show_status(message.from_user.id), parse_mode="HTML")
 
 
 @router.message(F.text == "Добавить запись")
@@ -106,22 +107,41 @@ async def on_date(message: Message, state: FSMContext):
 async def on_hour(message: Message, state: FSMContext):
 
     hour = message.text
+    tg_id = message.from_user.id
+    user = await get_user_with_times(message.from_user.id)
 
     data = await state.get_data()#сохряняем все данные FSM в виде словаря
     date_obj = data.get("date")#находим date
+    await state.update_data(hour=hour)
     if date_obj is None:
-        await message.answer("что то пошло не так, начни заново черт гребанный")
+        await message.answer("что то пошло не так, начни заново")
         await state.clear()
         return
 
-    tg_id = message.from_user.id
+    if user.user_tips:
+        await message.answer("теперь введи сумму чаевых за этот день:")
+        await state.set_state(AddWorkTime.tips)
+    else:
+        try:
+            await insert_time1(tg_id=tg_id, date=date_obj, hour=hour)
+        except Exception as e:
+            await message.answer(f"ошибка:{e}")
+            return
+        await message.answer("✅ Запись добавлена!", reply_markup=kb.main)
+        await state.clear()
 
+@router.message(AddWorkTime.tips)
+async def on_tips(message: Message,state: FSMContext):
+    data = await state.get_data()
+    date_obj = data.get("date")
+    hour = data.get("hour")
+    tg_id = message.from_user.id
+    tips = message.text
     try:
-        await insert_time1(tg_id=tg_id, date=date_obj, hour=hour)
+        await insert_time1(tg_id=tg_id, date=date_obj, hour=hour, tips=tips)
     except Exception as e:
         await message.answer(f"ошибка:{e}")
         return
-
     await message.answer("✅ Запись добавлена!", reply_markup=kb.main)
     await state.clear()
 

@@ -6,51 +6,11 @@ from sqlalchemy.orm import (Session, selectinload)
 from sqlalchemy.dialects.postgresql import insert
 from decimal import Decimal
 import asyncio
-from conf import async_session
+from database.db import async_session
 from database.models import User, WorkTime
 from database.funcs import parse_hours, parse_date, get_date, dates_for_status
-
-async def get_or_create_user(name:str, tg_id: int) -> str:
-    async with (async_session() as session):
-        stmt = (select(User)
-                .where(User.tg_id == tg_id))
-        result = await session.execute(stmt)
-        user = result.scalar_one_or_none()
-
-        if user:
-            greeting = f"приветсвую тебя {name} сновa, у тебя есть здесь учетная запись"
-            flag = False
-            return greeting, flag
-
-        user = User(tg_id=tg_id, name=name)
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-        greeting = f"приветсвую тебя {name}, этот бот был создан для трекинга рабочего времени"
-        flag = True
-        return greeting, flag
-
-async def set_rate(tg_id: int, rate: int):
-    async with async_session() as session:
-        stmt = (select(User)
-                .where(User.tg_id == tg_id))
-        result = await session.execute(stmt)
-        user = result.scalar_one_or_none()
-
-        if user is None:
-            raise ValueError("User not found")
-
-        user.rate = rate
-        await session.commit()
-
-async def set_tips(tg_id: int, value: bool):
-    async with async_session() as session:
-        stmt = (update(User)
-                .where(User.tg_id == tg_id)
-                .values(user_tips=value)
-                )
-        await session.execute(stmt)
-        await session.commit()
+from database.repo.users import get_user_with_times
+from database.repo.work_time import get_time_period
 
 async def insert_time1(tg_id: int, date: dt.datetime, hour: str) -> None:
     async with(async_session() as session):
@@ -68,15 +28,6 @@ async def test():
     await insert_time1(6480514308, dt.date(2026,2,5), "12,0")
 
 # asyncio.run(test())
-
-async def delete_user(tg_id: int) -> int:
-    async with async_session() as session:
-        stmt = delete(User).where(User.tg_id == tg_id)
-        result = await session.execute(stmt)
-        await session.commit()
-
-        return result.rowcount()
-
 # async def delete():
 #     await delete_user(6480514308)
 
@@ -91,54 +42,16 @@ async def checking():
 
 # asyncio.run(checking())
 
-async def get_user_with_times(tg_id: int) -> User | None:
-    async with async_session() as session:
-        result = await session.execute(
-            select(User)
-            .where(User.tg_id == tg_id)
-            .options(selectinload(User.work_times))
-        )
-        return result.scalar_one_or_none()
-
 # async def test3():
 #     user = await get_user_with_times(6480514308)
-#     print(user.rate)
+#     print(user.user_tips)
 #
 # asyncio.run(test3())
-
-async def delete_date(wd: str, tg_id: int):
-    async with async_session() as session:
-        wd = parse_date(wd)
-        stmt = delete(WorkTime).where(
-            WorkTime.user_id == tg_id,
-                        WorkTime.date == wd)
-        result = await session.execute(stmt)
-        await session.commit()
-
-        return result
-
-        if result.rowcount == 0:
-            print(f"по запросу {wd}, ничего не найдено")
-        else:
-            print(f"дата {wd} успешно удалено")
-
-async def get_time_period(tg_id: int, date_from: str, date_to: str):
-    async with async_session() as session:
-
-        stmt = (
-            select(WorkTime).where(
-            WorkTime.user_id == tg_id,
-            WorkTime.date.between(parse_date(date_from), parse_date(date_to))
-        )
-        .order_by(WorkTime.date)
-        )
-
-        result = await session.execute(stmt)
-        return result.scalars().all()
 
 async def show_status(tg_id: int) -> str:
     dates = dates_for_status()
     user = await get_user_with_times(tg_id=tg_id)
+    bool_tips = user.user_tips
     rate = user.rate
     text = f'Ваша ставка: {rate}\n'
     text += 'Статус по периодам\n\n'
@@ -148,17 +61,31 @@ async def show_status(tg_id: int) -> str:
         if len(res) == 0:
             text +="записей нету\n\n"
         else:
-            k = 0
+            k = Decimal("0")
+            tip = Decimal("0")
+            lines = []
             for r in res:
-                text +=f"\u2022🗓 {r.date.strftime('%d.%m')} | {r.hour} ч\n"
-                k += r.hour
+                line = f"\u2022🗓 {r.date.strftime('%d.%m')} | {r.hour:>4.1f} ч"
+                if bool_tips:
+                    line += f" | {r.tips:.0f} ₽\n"
+                    lines.append(line)
 
-            text +=f"\n⌛Итого часов: {k}\n ч"
-            text +=f"💸В сумме: {rate*k} ₽\n\n"
+                else:
+                    line += "\n"
+                    lines.append(line)
+
+                k += r.hour
+                tip += r.tips
+            lines.append(f"\n⌛часы: {k:.0f} ч\n")
+            lines.append(f"💸Итого: {rate * k:.0f} ₽\n")
+            if bool_tips:
+                lines.append(f"🪙чаевые:{tip} ₽\n")
+                lines.append(f"💰В сумме с чаем: {(rate * k) + tip:.0f} ₽\n")
+            text += "<pre>\n" + "\n".join(lines) + "\n</pre>\n"
     return text
 
-async def test():
-    res = await get_time_period(6480514308, date_from='01', date_to='15')
-    for r in res:
-        print("RESULT: ", r.date, "hours", r.hour)
+# async def test():
+#     res = await get_time_period(6480514308, date_from='01', date_to='15')
+#     for r in res:
+#         print("RESULT: ", r.date, "hours", r.hour)
 # asyncio.run(test())
