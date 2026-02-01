@@ -9,13 +9,18 @@ from aiogram.fsm.state import StatesGroup, State
 import datetime
 from decimal import Decimal
 
+from sqlalchemy.orm import defer
+
 from database.funcs import (parse_date, parse_hours, dates_for_status)
 from database.models import async_session, User, WorkTime
 from database.reports import (get_or_create_user, get_user_with_times, insert_time1,
-                              delete_date, get_time_period, show_status)
+                              delete_date, get_time_period, show_status, set_rate, set_tips)
 import app.keyboards as kb
 
 router = Router()
+
+class Logging(StatesGroup):
+    in_rate = State()
 
 class AddWorkTime(StatesGroup):
     date = State()
@@ -26,9 +31,47 @@ class DeleteFlow(StatesGroup):
     waiting_period = State()
 
 @router.message(CommandStart())
-async def Hello(message: Message):
-    greeting =await  get_or_create_user(message.from_user.username, message.from_user.id)
-    await message.answer(greeting, reply_markup=kb.main)
+async def Hello(message: Message, state: FSMContext):
+    greeting, flag =await  get_or_create_user(message.from_user.username, message.from_user.id)
+    if flag:
+        await message.answer(greeting)
+        await message.answer("введите вашу ставку:")
+        await state.set_state(Logging.in_rate)
+    else:
+        await message.answer(greeting, reply_markup=kb.main)
+
+@router.message(Logging.in_rate)
+async def logging(message: Message, state: FSMContext):
+
+    try:
+        rate = parse_hours(message.text)
+        await set_rate(message.from_user.id, rate)
+    except Exception as e:
+        await message.answer(f"ошибка:{e}")
+        return
+
+    await message.answer("будети ли вы вводить чаевые для статистики?", reply_markup=kb.for_tips)
+    await state.clear()
+
+@router.callback_query(F.data == "with_tips")
+async def with_tips(call: CallbackQuery):
+    await set_tips(
+        tg_id=call.from_user.id, value=True
+    )
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    await call.message.answer("✅ Чаевые включены", reply_markup=kb.main)
+    await call.answer()
+
+@router.callback_query(F.data == "without_tips")
+async def without_tips(call: CallbackQuery):
+    await set_tips(
+        tg_id=call.from_user.id, value=False
+    )
+    await call.message.edit_reply_markup(reply_markup=None)
+
+    await call.message.answer("❌ Чаевые выключены", reply_markup=kb.main)
+    await call.answer()
 
 @router.message(F.text == "Показать статус")
 async def status(message: Message):
@@ -55,7 +98,7 @@ async def on_date(message: Message, state: FSMContext):
         return
 
     await state.update_data(date=date_obj)
-    await message.answer(f"успешно сохранено как {date_obj}")
+    await message.answer(f"успешно сохранено как {date_obj.strftime('%d.%m.%Y')}")
     await state.set_state(AddWorkTime.hour)
     await message.answer("теперь введи кол-во часов")
 

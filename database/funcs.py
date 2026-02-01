@@ -13,7 +13,7 @@ def parse_hours(text: str) -> Decimal:
         raise ValueError("нужно число например 1.5")
 
     if value <= 0:
-        raise ValueError("Часы должны быть положительными и больше 0")
+        raise ValueError("Число должны быть положительными и больше 0")
 
     return value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
 

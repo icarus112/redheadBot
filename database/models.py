@@ -1,7 +1,7 @@
 import datetime as dt
 from decimal import Decimal
 
-from sqlalchemy import (BigInteger, String, ForeignKey, Date, Numeric, UniqueConstraint, select)
+from sqlalchemy import (BigInteger, String, ForeignKey, Date, Numeric, UniqueConstraint, select, Boolean)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session, selectinload
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker
 from typing import List
@@ -18,6 +18,8 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     name: Mapped[str] = mapped_column(String(25))
+    rate: Mapped[None| Decimal] = mapped_column(Numeric(10), nullable=True)
+    user_tips: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
     work_times: Mapped[List["WorkTime"]] = relationship(
         back_populates="user",
@@ -40,6 +42,7 @@ class WorkTime(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     date: Mapped[dt.date] = mapped_column(Date, nullable=False)
     hour: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
+    tips: Mapped[Decimal] = mapped_column(Numeric(6), nullable=False, server_default="0")
 
     user_id: Mapped[int] = mapped_column(
         BigInteger,
