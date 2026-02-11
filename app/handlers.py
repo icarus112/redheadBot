@@ -31,6 +31,9 @@ class DeleteFlow(StatesGroup):
     waiting_date = State()
     waiting_period = State()
 
+# для дебага
+
+
 @router.message(CommandStart())
 async def Hello(message: Message, state: FSMContext):
     greeting, flag =await  get_or_create_user(message.from_user.username, message.from_user.id)
