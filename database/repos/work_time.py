@@ -1,6 +1,8 @@
+from sqlalchemy.dialects.mssql.information_schema import constraints
+from sqlalchemy.ext.asyncio import AsyncSession
 from database.db import async_session
 from database.funcs import parse_hours, parse_date, get_date, dates_for_status
-from sqlalchemy import select, insert, DateTime, delete, text, update
+from sqlalchemy import select, insert, DateTime, delete, text, update, values
 from sqlalchemy.orm import (Session, selectinload)
 from sqlalchemy.dialects.postgresql import insert
 from decimal import Decimal
@@ -51,7 +53,37 @@ async def insert_time1(tg_id: int, date: dt.datetime, hour: str, tips: str = "0"
         await session.flush()
         await session.commit()
 
+'''ниже все переведено для pytest'''
+async def update_work_hours_repo(
+        session: AsyncSession,
+        tg_id: int,
+        date: dt.date,
+        hour: str)->bool:
+    stmt = (
+        update(WorkTime)
+        .where(
+            WorkTime.user_id == tg_id,
+            WorkTime.date == date
+        )
+        .values(hour=parse_hours(hour))
+    )
 
+    result = await session.execute(stmt)
+    return result.rowcount > 0
+
+async def update_work_tips_repo(
+    session: AsyncSession,
+            tg_id: int,
+            date: dt.date,
+            tips: str)->bool:
+    stmt = (
+        update(WorkTime)
+        .where(WorkTime.user_id == tg_id,
+               WorkTime.date == date)
+        ).values(tips=parse_hours(tips))
+
+    result = await session.execute(stmt)
+    return result.rowcount > 0
 
 # async def test():
 #     await insert_time1(6480514308, dt.date(2026,2,15), "12,0", "1940")

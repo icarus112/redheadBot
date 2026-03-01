@@ -6,18 +6,19 @@ from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
 from aiogram.filters import CommandStart
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from app.handlers.other import change_record
+
 # основное меню
-main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Показать статус")],
-                                     [KeyboardButton(text="Добавить запись")],
-                                     [KeyboardButton(text="Удалить"),
-                                      KeyboardButton(text="Редактировать")]],
+main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="👤Показать статус")],
+                                     [KeyboardButton(text="✏️Добавить запись")],
+                                     [KeyboardButton(text="❗Удалить"),
+                                      KeyboardButton(text="🎛️Другое")]],
                            resize_keyboard=True,
                            input_field_placeholder="Выберите пункт меню...")
 
 for_delete = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text="удалить запись", callback_data="del_record")],
-        [InlineKeyboardButton(text="удалить период", callback_data="del_period")],
         [InlineKeyboardButton(text="назад в меню", callback_data="to_menu")]
     ]
 )
@@ -25,7 +26,7 @@ for_delete = InlineKeyboardMarkup(
 '''для выбора отображения статуса'''
 status = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="по 15 дням")],
                                        [KeyboardButton(text="от _ до _")],
-                                       [KeyboardButton(text="за все время")]],
+                                       [KeyboardButton(text="назад в главное меню")]],
                              resize_keyboard=True,
                              input_field_placeholder="Выберите операцию..."
                              )
@@ -44,3 +45,17 @@ for_tips = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="❌ без чаевых", callback_data="without_tips")]
     ]
 )
+
+'''другое'''
+other = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='📝Изменить запись')],
+                                      [KeyboardButton(text='🪙Вкл/выкл чаевые')],
+                                      [KeyboardButton(text='📄отчёт в excel'),
+                                       KeyboardButton(text="назад в главное меню")]])
+
+'''изменить запись'''
+update_rec = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='🗓️Дату', callback_data="upd_date")],
+        [InlineKeyboardButton(text='🪙Чаевые', callback_data="upd_tips")],
+        [InlineKeyboardButton(text='⌛Часы работы', callback_data="upd_hours")],
+        [InlineKeyboardButton(text='назад в главное меню', callback_data="to_menu")]])

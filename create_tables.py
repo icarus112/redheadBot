@@ -2,7 +2,7 @@ import asyncio
 import datetime as dt
 
 from sqlalchemy import select, text
-from conf import async_session
+from database.db import async_session
 from database.models import User
 from database.reports import insert_time1
 

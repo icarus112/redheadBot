@@ -5,7 +5,7 @@ import logging
 import sys
 
 
-from app.handlers import router
+from app.handlers.router import router
 from database.init_db import init_db
 
 async def main():

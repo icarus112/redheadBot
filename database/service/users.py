@@ -2,9 +2,12 @@ from database.db import async_session
 from database.funcs import parse_hours, parse_date, get_date, dates_for_status
 from sqlalchemy import select, insert, DateTime, delete, text, update
 from sqlalchemy.orm import (Session, selectinload)
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
 from sqlalchemy.dialects.postgresql import insert
 from decimal import Decimal
 import asyncio
+
 import datetime as dt
 from database.models import User
 
@@ -27,6 +30,8 @@ async def get_or_create_user(name:str, tg_id: int) -> str:
         greeting = f"приветсвую тебя {name}, этот бот был создан для трекинга рабочего времени"
         flag = True
         return greeting, flag
+
+
 
 async def set_rate(tg_id: int, rate: int):
     async with async_session() as session:

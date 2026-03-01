@@ -17,6 +17,19 @@ def parse_hours(text: str) -> Decimal:
 
     return value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
 
+def parse_rate(text: str) -> Decimal:
+    t = text.strip().replace(",", ".")
+    try:
+        value = Decimal(t)
+    except InvalidOperation:
+        raise ValueError(" вам надо ввести вашу ставку, например 190")
+
+    if value < 0:
+        raise ValueError("Число должны быть положительными или 0")
+
+    return value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+
+
 def parse_date(wd: str):
     wd = wd.split(".")
     month = dt.date.today().month
@@ -65,7 +78,6 @@ def dates_for_status():
         del dates[-1]
 
     return dates
-
 
 def from_date_to_str(wd: dt.datetime) -> str:
     year = wd.year
