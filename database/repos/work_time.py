@@ -26,34 +26,32 @@ async def delete_date(wd: str, tg_id: int):
         else:
             print(f"дата {wd} успешно удалено")
 
-async def get_time_period(tg_id: int, date_from: str, date_to: str):
-    async with async_session() as session:
-
-        stmt = (
-            select(WorkTime).where(
+'''ниже все переведено для pytest'''
+async def get_time_period_repo(session: AsyncSession,tg_id: int,
+                               date_from: str, date_to: str):
+    stmt = (
+        select(WorkTime).where(
             WorkTime.user_id == tg_id,
             WorkTime.date.between(parse_date(date_from), parse_date(date_to))
         )
         .order_by(WorkTime.date)
-        )
+    )
 
-        result = await session.execute(stmt)
-        return result.scalars().all()
+    result = await session.execute(stmt)
+    return result.scalars().all()
 
-async def insert_time1(tg_id: int, date: dt.datetime, hour: str, tips: str = "0") -> None:
-    async with(async_session() as session):
-        wt = WorkTime(
-            user_id = tg_id,
-            date=date,
-            hour=parse_hours(hour),
-            tips=parse_hours(tips)
-        )
+async def insert_time_repo(session: AsyncSession,
+                      tg_id: int, date: dt.datetime,
+                      hour: str, tips: str = "0") -> None:
+    wt = WorkTime(
+        user_id=tg_id,
+        date=date,
+        hour=parse_hours(hour),
+        tips=parse_hours(tips)
+    )
 
-        session.add(wt)
-        await session.flush()
-        await session.commit()
+    session.add(wt)
 
-'''ниже все переведено для pytest'''
 async def update_work_hours_repo(
         session: AsyncSession,
         tg_id: int,
@@ -82,6 +80,18 @@ async def update_work_tips_repo(
                WorkTime.date == date)
         ).values(tips=parse_hours(tips))
 
+    result = await session.execute(stmt)
+    return result.rowcount > 0
+
+async def update_work_date_repo(
+        session: AsyncSession,
+        tg_id: int,
+        old_date: dt.date,
+        new_date: dt.date) -> bool:
+    stmt = (update(WorkTime)
+            .where(WorkTime.user_id==tg_id,
+                   WorkTime.date == old_date)
+            ).values(date=new_date)
     result = await session.execute(stmt)
     return result.rowcount > 0
 

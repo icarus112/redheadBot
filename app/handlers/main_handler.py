@@ -4,10 +4,8 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
 from aiogram.fsm.state import StatesGroup, State
 
-from database.funcs import (parse_date, parse_hours, dates_for_status, parse_rate)
-from database.service.work_time import (insert_time1, delete_date, get_time_period)
-from database.service.users import (get_or_create_user, get_user_with_times, set_rate, set_tips, delete_user)
-from database.reports import show_status
+from database.funcs import parse_rate
+from database.service.users import (get_or_create_user, set_rate, set_tips)
 import app.keyboards as kb
 
 router = Router()

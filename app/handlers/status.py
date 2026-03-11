@@ -1,13 +1,11 @@
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
-from aiogram.filters import CommandStart
+from aiogram.types import Message
 from aiogram.fsm.state import StatesGroup, State
 from decimal import Decimal
 
-from database.funcs import (parse_date, parse_hours, dates_for_status, parse_rate)
-from database.service.work_time import (insert_time1, delete_date, get_time_period)
-from database.service.users import (get_or_create_user, get_user_with_times, set_rate, set_tips, delete_user)
+from database.funcs import (parse_date, dates_for_status)
+from database.service.users import get_user_with_times
 from database.reports import show_status, show_status_for_period
 import app.keyboards as kb
 

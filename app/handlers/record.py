@@ -4,10 +4,9 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
 from aiogram.fsm.state import StatesGroup, State
 
-from database.funcs import (parse_date, parse_hours, dates_for_status, parse_rate)
-from database.service.work_time import (insert_time1, delete_date, get_time_period)
-from database.service.users import (get_or_create_user, get_user_with_times, set_rate, set_tips, delete_user)
-from database.reports import show_status
+from database.funcs import parse_date
+from database.service.work_time import insert_time
+from database.service.users import get_user_with_times
 import app.keyboards as kb
 
 router = Router()
@@ -17,9 +16,9 @@ class AddWorkTime(StatesGroup):
     hour = State()
     tips = State()
 
-@router.message(F.text == "️✏️Добавить запись")
-async def add_record(message: Message, state: FSMContext):
-    await message.answer("введи дату")
+@router.message(F.text == "✏️Добавить запись")
+async def add_new_record(message: Message, state: FSMContext):
+    await message.answer("Введи дату")
     await state.set_state(AddWorkTime.date)
 
 @router.message(AddWorkTime.date)
@@ -55,7 +54,7 @@ async def on_hour(message: Message, state: FSMContext):
         await state.set_state(AddWorkTime.tips)
     else:
         try:
-            await insert_time1(tg_id=tg_id, date=date_obj, hour=hour)
+            await insert_time(tg_id=tg_id, date=date_obj, hour=hour)
         except Exception as e:
             await message.answer(f"ошибка:{e}")
             return
@@ -70,7 +69,7 @@ async def on_tips(message: Message,state: FSMContext):
     tg_id = message.from_user.id
     tips = message.text
     try:
-        await insert_time1(tg_id=tg_id, date=date_obj, hour=hour, tips=tips)
+        await insert_time(tg_id=tg_id, date=date_obj, hour=hour, tips=tips)
     except Exception as e:
         await message.answer(f"ошибка:{e}")
         return
