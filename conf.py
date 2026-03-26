@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+#все переменные для учебного бота, прод безопасен от тебя
 
 #все переменные для учебного бота, прод безопасен от тебя
 TOKEN = os.getenv("TOKEN")

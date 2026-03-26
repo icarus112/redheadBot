@@ -19,7 +19,7 @@ async def Hello(message: Message, state: FSMContext):
     try:
         greeting, flag =await  get_or_create_user(message.from_user.username, message.from_user.id)
     except Exception as ex:
-        await message.answer(f"ошибка:{e}")
+        await message.answer(f"ошибка:{ex}")
         return
     if flag:
         await message.answer(greeting)

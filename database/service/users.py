@@ -10,8 +10,8 @@ async def get_or_create_user(name:str, tg_id: int) -> str:
         try:
             user = await get_or_create_user_repo(session,name,tg_id)
             if user:
-                greeting = (f"приветсвую тебя {name} сновa, у тебя есть здесь учетная запись, если есть вопросы ->"
-                            f"напиши мне /help")
+                greeting = f"""приветсвую тебя {name} сновa, у тебя есть здесь учетная запись, если есть вопросы ->
+                            напиши мне /help"""
                 flag = False
                 return greeting, flag
 
@@ -19,8 +19,8 @@ async def get_or_create_user(name:str, tg_id: int) -> str:
             session.add(user)
             await session.commit()
             await session.refresh(user)
-            greeting = (f"приветсвую тебя {name}, этот бот был создан для трекинга рабочего времени если есть вопросы ->",
-                       f"напиши мне /help")
+            greeting = f"""приветсвую тебя {name}, этот бот был создан для трекинга рабочего времени если есть вопросы ->",
+                       напиши мне /help"""
             flag = True
             return greeting, flag
         except Exception:

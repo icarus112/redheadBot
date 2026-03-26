@@ -53,7 +53,7 @@ async def show_status(tg_id: int) -> str:
     dates = dates_for_status()
     user = await get_user_with_times(tg_id=tg_id)
     bool_tips = user.user_tips
-    rate = user.rate
+    rate = Decimal(str(user.rate))
     text = f'Ваша ставка: {rate}\n'
     text += 'Статус по периодам\n\n'
     for d in dates:
@@ -75,8 +75,8 @@ async def show_status(tg_id: int) -> str:
                     line += "\n"
                     lines.append(line)
 
-                k += r.hour
-                tip += r.tips
+                k += Decimal(str(r.hour))
+                tip += Decimal(str(r.tips or 0))
             lines.append(f"\n⌛часы: {k:.0f} ч\n")
             lines.append(f"💸Итого: {rate * k:.0f} ₽\n")
             if bool_tips:
