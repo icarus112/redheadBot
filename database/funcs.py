@@ -5,7 +5,8 @@ from database.models import WorkTime, User
 from sqlalchemy import select
 from calendar import monthrange
 
-def parse_hours(text: str) -> Decimal:
+#много где используется для парсинга чисел
+def parse_text_to_decimal(text: str) -> Decimal:
     t = text.strip().replace(",", ".")
     try:
         value = Decimal(t)
@@ -17,19 +18,8 @@ def parse_hours(text: str) -> Decimal:
 
     return value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
 
-def parse_rate(text: str) -> Decimal:
-    t = text.strip().replace(",", ".")
-    try:
-        value = Decimal(t)
-    except InvalidOperation:
-        raise ValueError(" вам надо ввести вашу ставку, например 190")
-
-    if value < 0:
-        raise ValueError("Число должны быть положительными или 0")
-
-    return value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
-
-
+#используется для обработки даты например если он введет 22 то функция сама это переведет
+# в 22.10.2010(использует сегоднюшную дату)
 def parse_date(wd: str):
     wd = wd.split(".")
     month = dt.date.today().month
@@ -47,11 +37,13 @@ def parse_date(wd: str):
 
     return dt.datetime.strptime(new_wd, "%Y.%m.%d").date()
 
+# для расчетов в dates_for_status
 def prev_month(date: dt.date):
     if date.month == 1:
         return date.replace(year=date.year - 1, month=12)
     return date.replace(month= date.month - 1)
 
+# выдает 3 интервала месяцев по 15 дням в списке
 def dates_for_status():
     today = dt.date.today()
     dates =[]

@@ -1,12 +1,6 @@
-from gc import callbacks
 
-from aiogram import Router, F
 from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
                            InlineKeyboardMarkup, InlineKeyboardButton)
-from aiogram.filters import CommandStart
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-
-from app.handlers.other import change_record
 
 # основное меню
 main = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="👤Показать статус")],
@@ -48,8 +42,9 @@ for_tips = InlineKeyboardMarkup(
 
 '''другое'''
 other = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='📝Изменить запись')],
-                                      [KeyboardButton(text='🪙Вкл/выкл чаевые')],
-                                      [KeyboardButton(text='📄отчёт в excel'),
+                                      [KeyboardButton(text='🪙Вкл/выкл чаевые'),
+                                       KeyboardButton(text="🧮Изменить ставку")],
+                                      [KeyboardButton(text='📄Отчёт в excel'),
                                        KeyboardButton(text="назад в главное меню")]])
 
 '''изменить запись'''

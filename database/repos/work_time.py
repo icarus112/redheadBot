@@ -1,32 +1,19 @@
-from sqlalchemy.dialects.mssql.information_schema import constraints
 from sqlalchemy.ext.asyncio import AsyncSession
-from database.db import async_session
-from database.funcs import parse_hours, parse_date, get_date, dates_for_status
+from database.funcs import parse_text_to_decimal, parse_date
 from sqlalchemy import select, insert, DateTime, delete, text, update, values
-from sqlalchemy.orm import (Session, selectinload)
-from sqlalchemy.dialects.postgresql import insert
-from decimal import Decimal
-import asyncio
+
 import datetime as dt
 from database.models import WorkTime
 
-async def delete_date(wd: str, tg_id: int):
-    async with async_session() as session:
-        wd = parse_date(wd)
-        stmt = delete(WorkTime).where(
-            WorkTime.user_id == tg_id,
-                        WorkTime.date == wd)
-        result = await session.execute(stmt)
-        await session.commit()
+async def delete_date_repo(session: AsyncSession,wd: str, tg_id: int):
+    wd = parse_date(wd)
+    stmt = delete(WorkTime).where(
+        WorkTime.user_id == tg_id,
+                    WorkTime.date == wd)
+    result = await session.execute(stmt)
 
-        return result
+    return result
 
-        if result.rowcount == 0:
-            print(f"по запросу {wd}, ничего не найдено")
-        else:
-            print(f"дата {wd} успешно удалено")
-
-'''ниже все переведено для pytest'''
 async def get_time_period_repo(session: AsyncSession,tg_id: int,
                                date_from: str, date_to: str):
     stmt = (
@@ -46,8 +33,8 @@ async def insert_time_repo(session: AsyncSession,
     wt = WorkTime(
         user_id=tg_id,
         date=date,
-        hour=parse_hours(hour),
-        tips=parse_hours(tips)
+        hour=parse_text_to_decimal(hour),
+        tips=parse_text_to_decimal(tips)
     )
 
     session.add(wt)
@@ -63,7 +50,7 @@ async def update_work_hours_repo(
             WorkTime.user_id == tg_id,
             WorkTime.date == date
         )
-        .values(hour=parse_hours(hour))
+        .values(hour=parse_text_to_decimal(hour))
     )
 
     result = await session.execute(stmt)
@@ -78,7 +65,7 @@ async def update_work_tips_repo(
         update(WorkTime)
         .where(WorkTime.user_id == tg_id,
                WorkTime.date == date)
-        ).values(tips=parse_hours(tips))
+        ).values(tips=parse_text_to_decimal(tips))
 
     result = await session.execute(stmt)
     return result.rowcount > 0
@@ -94,8 +81,3 @@ async def update_work_date_repo(
             ).values(date=new_date)
     result = await session.execute(stmt)
     return result.rowcount > 0
-
-# async def test():
-#     await insert_time1(6480514308, dt.date(2026,2,15), "12,0", "1940")
-#
-# asyncio.run(test())

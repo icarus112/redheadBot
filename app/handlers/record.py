@@ -1,7 +1,6 @@
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from aiogram.filters import CommandStart
 from aiogram.fsm.state import StatesGroup, State
 
 from database.funcs import parse_date

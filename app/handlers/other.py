@@ -1,14 +1,24 @@
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.fsm.state import StatesGroup, State
+from aiogram.types import BufferedInputFile
+
+from sqlalchemy import create_engine
 
 from database.funcs import parse_date
 from database.service.work_time import (update_work_hours, update_work_tips, update_work_date)
-
+from database.service.users import get_user_with_times, update_rate
+from conf import DATABASE_URL_SYNC
 import app.keyboards as kb
 
+from io import BytesIO
+import pandas as pd
+import datetime as dt
 router = Router()
+
+class ChangeRate(StatesGroup):
+    update_rate = State()
 
 class ChangeHour(StatesGroup):
     select_date = State()
@@ -21,6 +31,7 @@ class ChangeTips(StatesGroup):
 class ChangeDate(StatesGroup):
     select_date = State()
     update_date = State()
+
 @router.message(F.text == "🎛️Другое")
 async def other(message: Message):
     await message.answer("выберите функцию:", reply_markup=kb.other)
@@ -182,3 +193,73 @@ async def update_date(message: Message, state: FSMContext):
         await message.answer(f"\u2b05", reply_markup=kb.main)
 
     await state.clear()
+
+@router.message(F.text == "🧮Изменить ставку")
+async def change_rate(message: Message, state: FSMContext):
+    user = await get_user_with_times(message.from_user.id)
+    await message.answer(f"Ваша ставка сейчас: {user.rate}")
+    await message.answer("Введите новую ставку:")
+    await state.set_state(ChangeRate.update_rate)
+
+@router.message(ChangeRate.update_rate)
+async def update_user_rate(message: Message, state: FSMContext):
+    try:
+        new_rate = message.text
+        ok = await update_rate(rate=new_rate, tg_id=message.from_user.id)
+    except Exception as ex:
+        await message.answer("ошибка: ",ex)
+        return
+    if ok:
+        await message.answer("Ваша ставка успешна изменена")
+    else:
+        await message.answer("Что-то пошло не так попробуйте снова")
+
+    await state.clear()
+
+@router.message(F.text == "📄Отчёт в excel")
+async def export_work_times(message: Message):
+    try:
+        engine = create_engine(DATABASE_URL_SYNC)
+        data = pd.read_sql("select * from work_time", engine)
+
+        #изменение колонок
+        data["date"] = pd.to_datetime(data["date"]).dt.strftime("%d.%m.%Y")
+        data["user_id"] = data["user_id"].astype(str)
+
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+            today = f"""отчёт_{dt.date.today().strftime("%d.%m.%Y")}.xlsx"""
+            data.to_excel(writer, index=False, sheet_name="Отчёт")
+
+            workbook = writer.book
+            worksheet = writer.sheets["Отчёт"]
+
+            # формат заголовков
+            header_format = workbook.add_format({
+                "bold": True,
+                "border": 1
+            })
+
+            # применяем формат к заголовкам
+            for col_num, col_name in enumerate(data.columns):
+                worksheet.write(0, col_num, col_name, header_format)
+
+            # автоширина колонок
+            for i, col in enumerate(data.columns):
+                max_length = max(
+                    data[col].astype(str).map(len).max(),
+                    len(col)
+                )
+                worksheet.set_column(i, i, max_length + 2)
+
+            # 🔹 формат даты
+            date_format = workbook.add_format({"num_format": "dd.mm.yyyy"})
+            if "date" in data.columns:
+                col_idx = data.columns.get_loc("date")
+                worksheet.set_column(col_idx, col_idx, 15, date_format)
+
+        buffer.seek(0)
+        await message.answer_document(BufferedInputFile(buffer.read(), filename=today))
+    except Exception as ex:
+        print(ex)
+        return

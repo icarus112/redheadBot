@@ -4,7 +4,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
 from aiogram.fsm.state import StatesGroup, State
 
-from database.funcs import parse_rate
+from database.funcs import parse_text_to_decimal
 from database.service.users import (get_or_create_user, set_rate, set_tips)
 import app.keyboards as kb
 
@@ -15,7 +15,12 @@ class Logging(StatesGroup):
 
 @router.message(CommandStart())
 async def Hello(message: Message, state: FSMContext):
-    greeting, flag =await  get_or_create_user(message.from_user.username, message.from_user.id)
+
+    try:
+        greeting, flag =await  get_or_create_user(message.from_user.username, message.from_user.id)
+    except Exception as ex:
+        await message.answer(f"ошибка:{e}")
+        return
     if flag:
         await message.answer(greeting)
         await message.answer("введите вашу ставку:")
@@ -27,7 +32,7 @@ async def Hello(message: Message, state: FSMContext):
 async def logging(message: Message, state: FSMContext):
 
     try:
-        rate = parse_rate(message.text)
+        rate = parse_text_to_decimal(message.text)
         await set_rate(message.from_user.id, rate)
     except Exception as e:
         await message.answer(f"ошибка:{e}")
@@ -35,6 +40,14 @@ async def logging(message: Message, state: FSMContext):
 
     await message.answer("будети ли вы вводить чаевые для статистики?", reply_markup=kb.for_tips)
     await state.clear()
+
+@router.message(F.text == "/help")
+async def help_me(message: Message):
+    text = ("Этот бот создан для введение записей рабочих часов с его помощью можно добавлять, удалять, изменять записи\n"
+            "учитывать чаевые (или нет), удобный отчет по 15 дням месяца, в котором данные для введения статистики,\nтакже все"
+            " данные можно получить в виду excel(почему бы и нет)")
+
+    await message.answer(text)
 
 @router.callback_query(F.data == "with_tips")
 async def with_tips(call: CallbackQuery):

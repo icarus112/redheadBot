@@ -1,3 +1,5 @@
+#нигде не используется, только для теста подключения
+
 import asyncio
 import datetime as dt
 
@@ -5,7 +7,6 @@ from sqlalchemy import select, text
 from database.db import async_session
 from database.models import User
 from database.reports import insert_time1
-
 
 async def main():
     tg_id = 6480514308

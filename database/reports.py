@@ -9,7 +9,7 @@ from decimal import Decimal
 import asyncio
 from database.db import async_session
 from database.models import User, WorkTime
-from database.funcs import parse_hours, parse_date, get_date, dates_for_status
+from database.funcs import parse_text_to_decimal, parse_date, get_date, dates_for_status
 from database.service.users import get_user_with_times
 from database.service.work_time import get_time_period
 
@@ -18,7 +18,7 @@ async def insert_time1(tg_id: int, date: dt.datetime, hour: str) -> None:
         wt = WorkTime(
             user_id = tg_id,
             date=date,
-            hour=parse_hours(hour)
+            hour=parse_text_to_decimal(hour)
         )
 
         session.add(wt)

@@ -1,6 +1,7 @@
-from sqlalchemy.orm import selectinload
+#для справки оставлю----нигде не нужен
 
-from conf import async_session
+from sqlalchemy.orm import selectinload
+from database.db import async_session
 from database.models import User, WorkTime
 import asyncio
 from sqlalchemy import select
@@ -12,7 +13,7 @@ async def main():
         '''CREATE'''
         user = User(
             tg_id=123321,
-            name="Gandon"
+            name="Aandon"
         )
         # session.add(user)
         #

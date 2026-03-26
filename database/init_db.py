@@ -1,3 +1,4 @@
+#для создания БД
 import asyncio
 from database.db import engine
 from database.models import Base

@@ -1,29 +1,25 @@
-
-from decimal import Decimal
-import asyncio
 import datetime as dt
-
-from database.repos.work_time import (insert_time_repo, update_work_hours_repo, update_work_tips_repo, update_work_date_repo, get_time_period_repo)
+from database.repos.work_time import (insert_time_repo, update_work_tips_repo,
+                                      update_work_date_repo, get_time_period_repo,
+                                      delete_date_repo, update_work_hours_repo)
 from database.db import async_session
-from database.funcs import parse_hours, parse_date
-from sqlalchemy import select, delete
-from database.models import WorkTime
+
 
 async def delete_date(wd: str, tg_id: int):
     async with async_session() as session:
-        wd = parse_date(wd)
-        stmt = delete(WorkTime).where(
-            WorkTime.user_id == tg_id,
-                        WorkTime.date == wd)
-        result = await session.execute(stmt)
-        await session.commit()
+        try:
+            result = await delete_date_repo(session, wd, tg_id)
+            await session.commit()
+            if result.rowcount == 0:
 
-        return result
+                print(f"по запросу {wd}, ничего не найдено")
+            else:
+                print(f"дата {wd} успешно удалено")
 
-        if result.rowcount == 0:
-            print(f"по запросу {wd}, ничего не найдено")
-        else:
-            print(f"дата {wd} успешно удалено")
+            return result
+        except Exception:
+            await session.rollback()
+            raise
 
 async def get_time_period(tg_id: int, date_from: str, date_to: str):
     async with async_session() as session:

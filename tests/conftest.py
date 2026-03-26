@@ -2,7 +2,7 @@ from database.db import async_session
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-# ⚠️ Используй тот же URL, что и у тебя (или отдельный test-db URL)
+# Используй тот же URL, что и у тебя (или отдельный test-db URL)
 DATABASE_URL = "postgresql+asyncpg://tracker_user:tracker_pass@localhost:5433/tracker"
 
 @pytest_asyncio.fixture

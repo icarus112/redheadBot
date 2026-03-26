@@ -2,7 +2,6 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.fsm.state import StatesGroup, State
-from decimal import Decimal
 
 from database.funcs import (parse_date, dates_for_status)
 from database.service.users import get_user_with_times
