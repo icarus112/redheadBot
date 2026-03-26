@@ -5,6 +5,7 @@ load_dotenv()
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
+#все переменные для учебного бота, прод безопасен от тебя
 TOKEN = os.getenv("TOKEN")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5433")
